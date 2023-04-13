@@ -9,15 +9,13 @@ uses
 
 type
   TForm14 = class(TForm)
-    Layout1: TLayout;
-    Layout2: TLayout;
-    Label1: TLabel;
-    Layout3: TLayout;
     ImageViewer1: TImageViewer;
-    Layout4: TLayout;
-    Label2: TLabel;
-    Layout5: TLayout;
-    AniIndicator1: TAniIndicator;
+    Brush1: TBrushObject;
+    Label1: TLabel;
+    Timer1: TTimer;
+    StyleBook1: TStyleBook;
+    procedure tcre(Sender: TObject);
+    procedure finTC(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -26,9 +24,30 @@ type
 
 var
   Form14: TForm14;
+  i : Integer = 1;
 
 implementation
 
 {$R *.fmx}
+
+procedure TForm14.finTC(Sender: TObject);
+begin
+  Timer1.Enabled := false;
+  if i<=3 then
+  begin
+    Label1.Text := Label1.Text + '.';
+    i := i + 1;
+  end else begin
+      Label1.Text :='Chargement en cours ';
+      i := 1;
+  end;
+  Timer1.Enabled := true;
+end;
+
+procedure TForm14.tcre(Sender: TObject);
+begin
+Timer1.Enabled := true;
+Timer1.Interval := 300;
+end;
 
 end.

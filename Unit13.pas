@@ -14,7 +14,6 @@ uses
     Timer1: TTimer;
     Layout1: TLayout;
     Label1: TLabel;
-    Label2: TLabel;
     IdHTTP1: TIdHTTP;
     GroupBox1: TGroupBox;
     ImageViewer1: TImageViewer;
@@ -23,6 +22,8 @@ uses
     Button2: TButton;
     Edit1: TEdit;
     Edit2: TEdit;
+    Label13: TLabel;
+    Label14: TLabel;
     GroupBox2: TGroupBox;
     Button3: TButton;
     Label7: TLabel;
@@ -32,11 +33,15 @@ uses
     Label10: TLabel;
     Label11: TLabel;
     Label12: TLabel;
-    Label13: TLabel;
-    Label14: TLabel;
+    StyleBook1: TStyleBook;
+    Label2: TLabel;
+    Label3: TLabel;
+    Label6: TLabel;
+    Label15: TLabel;
     procedure Splash(Sender: TObject);
     procedure FinTemps(Sender: TObject);
     procedure Button2Click(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -62,15 +67,39 @@ http := TIdHTTP.Create(nil);
        ShowMessage('Paramètres incorrects !');
    end else begin
      t1 := edit1.Text;
-     t2 := edit1.Text;
+     t2 := edit2.Text;
     try
-      reponse1 := http.Get('http://192.168.20.124:80/d?rtmp=t1:t2');
+      reponse1 := http.Get('http://192.168.20.124:80/d?rtmp='+t1+':'+t2);
       if reponse1 = 'OK' then showMessage('Paramétrage réussi');
 
     finally
       http.free;
     end;
    end;
+end;
+
+procedure TForm13.Button3Click(Sender: TObject);
+var
+t, h, hic, reponse2 : String ;
+i,j : Integer;
+http: TIdHTTP;
+begin
+http := TIdHTTP.Create(nil);
+
+    try
+      reponse2 := http.Get('http://192.168.20.124:80/?cmd=get');
+      i := reponse2.IndexOf(':');
+      j := reponse2.IndexOf('!');
+      t := reponse2.Substring(0,i);
+      label12.Text := t;
+      h := reponse2.Substring(i+1,5);
+      label11.Text := h;
+      hic := reponse2.Substring(j+1);
+      label3.Text := hic;
+
+    finally
+      http.free;
+    end;
 end;
 
 procedure TForm13.FinTemps(Sender: TObject);
