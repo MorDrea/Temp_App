@@ -5,7 +5,8 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.StdCtrls,
-  FMX.Controls.Presentation, FMX.Layouts, FMX.ExtCtrls;
+  FMX.Controls.Presentation, FMX.Layouts, FMX.ExtCtrls, Datasnap.DBClient,
+  Datasnap.Provider, Data.DB, Data.Win.ADODB;
 
 type
   TForm14 = class(TForm)
@@ -48,6 +49,7 @@ procedure TForm14.tcre(Sender: TObject);
 begin
 Timer1.Enabled := true;
 Timer1.Interval := 300;
+
 end;
 
 end.

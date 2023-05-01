@@ -16,8 +16,10 @@ Preferences preferences;
 const char* PARAM_INPUT_1 = "cmd";
 const char* PARAM_INPUT_2 = "rtmp";
 int relais1 = 27;
-int relais2 = 14;
 String inputMessage = "null";
+float h = 0.00;
+float t = 0.00;
+float hic = 0.00;
 // definitions of your desired intranet created by the ESP32
 IPAddress PageIP(192, 168, 20, 124);
 IPAddress gateway(192, 168, 20, 198);
@@ -38,7 +40,7 @@ Y1 = preferences.getInt("Y1",25);
 Y2 = preferences.getInt("Y2",30);
 Serial.println("ESP serial initialize");
 delay(1000);
-pinMode(relais1,OUTPUT); pinMode(relais2,OUTPUT);
+pinMode(relais1,OUTPUT);
 
 WiFi.softAP("esp32wifi","11111111"); delay(100); 
 WiFi.softAPConfig(PageIP, gateway, subnet); delay(100); 
@@ -65,18 +67,23 @@ if(inputMessage == "a"){
 }else if(inputMessage == "get"){
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  float h = dht.readHumidity();
+   h = dht.readHumidity();
   // Read temperature as Celsius (the default)
-  float t = dht.readTemperature();
+   t = dht.readTemperature();
 
   // Check if any reads failed and exit early (to try again).
   if (isnan(h) || isnan(t)) {
+    request->send(200,"text/plain","err");
+    return;
+  }
+
+  if ((t >= Y2+5) || (Y1-2 >= t)) {
     request->send(200,"text/plain","error");
     return;
   }
 
   // Compute heat index in Celsius (isFahreheit = false)
-  float hic = dht.computeHeatIndex(t, h, false);
+   hic = dht.computeHeatIndex(t, h, false);
   delay(3000);
   String jul = String(t)+":"+String(h)+"!"+String(hic);
   request->send(200,"text/plain",jul);
@@ -109,5 +116,16 @@ server.begin();
 }
 
 void loop() {
-  
+   h = dht.readHumidity();
+   t = dht.readTemperature();
+  if (isnan(h) || isnan(t)) {
+    return;
+  }
+   hic = dht.computeHeatIndex(t, h, false);
+  delay(3000);
+  if (t > Y2){
+    digitalWrite(relais1, LOW);
+  }else if (Y1 > t){
+    digitalWrite(relais1, HIGH);
+  }
 }

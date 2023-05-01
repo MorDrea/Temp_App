@@ -4,10 +4,11 @@ unit Unit13;
 interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
-  FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, Unit14,
+  FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, Unit14, Unit1,
   FMX.StdCtrls, FMX.Layouts, FMX.ExtCtrls, FMX.Controls.Presentation,
   FMX.ListBox, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient,
-  IdHTTP, FMX.Edit;
+  IdHTTP, FMX.Edit, Datasnap.DBClient, Datasnap.Provider, Data.DB,
+  Data.Win.ADODB;
 
   type
   TForm13 = class(TForm)
@@ -38,10 +39,17 @@ uses
     Label3: TLabel;
     Label6: TLabel;
     Label15: TLabel;
+    ADOConnection1: TADOConnection;
+    ADOQuery1: TADOQuery;
+    DataSetProvider1: TDataSetProvider;
+    ClientDataSet1: TClientDataSet;
+    Button1: TButton;
     procedure Splash(Sender: TObject);
     procedure FinTemps(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
+    procedure closeMe(Sender: TObject; var Action: TCloseAction);
+    procedure Button1Click(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -52,9 +60,37 @@ var
   Form13: TForm13;
 
 implementation
-var Form14 : TForm14;
+var Form14 : TForm14;  Form1 : TForm1;
+
 
 {$R *.fmx}
+
+procedure TForm13.Button1Click(Sender: TObject);
+begin
+ADOQuery1.SQL.Text := 'SELECT COUNT(*) FROM TMP';
+try
+  ADOQuery1.Open;
+  if ADOQuery1.Fields[0].AsInteger = 0 then
+  begin
+    ShowMessage('AUCUNE DONNEE ENREGISTREE !');
+  end else begin
+
+  end;
+  ADOQuery1.Close;
+except
+  on E:Exception do
+  begin
+    if Pos('Table not found', E.Message) > 0 then
+    begin
+      ShowMessage('ERREUR RENCONTREE, VEUILLEZ REDEMARRER L''APPLICATION !');
+    end
+    else
+    begin
+      Form1.Show;
+    end;
+  end;
+end;
+end;
 
 procedure TForm13.Button2Click(Sender: TObject);
 var
@@ -88,24 +124,61 @@ http := TIdHTTP.Create(nil);
 
     try
       reponse2 := http.Get('http://192.168.20.124:80/?cmd=get');
-      i := reponse2.IndexOf(':');
-      j := reponse2.IndexOf('!');
-      t := reponse2.Substring(0,i);
-      label12.Text := t;
-      h := reponse2.Substring(i+1,5);
-      label11.Text := h;
-      hic := reponse2.Substring(j+1);
-      label3.Text := hic;
+      if reponse2 = 'err' then
+      begin
+           MessageBeep(MB_ICONEXCLAMATION);
+           ShowMessage('VEUILLEZ REESSAYER ');
+      end else if reponse2 = 'error' then
+               begin
+                  MessageBeep(MB_ICONERROR);
+                  ShowMessage('TEMPERATURE ANORMALE, VERIFIEZ LE CAPTEUR OU LA RESISTANCE CHAUFFANTE ! ');
+               end else begin
+                    i := reponse2.IndexOf(':');
+                    j := reponse2.IndexOf('!');
+                    t := reponse2.Substring(0,i);
+                    label12.Text := t;
+                    h := reponse2.Substring(i+1,5);
+                    label11.Text := h;
+                    hic := reponse2.Substring(j+1);
+                    label3.Text := hic;
 
     finally
       http.free;
     end;
+
+    end;
+
+    // Insérez les données de température dans la table de la base de données
+ADOQuery1.SQL.Text := 'INSERT INTO TMP (Date, Temperature, Humidite, IndK) VALUES (:date, :temperature, :humidite, :indk)';
+ADOQuery1.Parameters.ParamByName('date').Value := Now;
+ADOQuery1.Parameters.ParamByName('temperature').Value := strToFloat(t);
+ADOQuery1.Parameters.ParamByName('humidite').Value := strToFloat(h);
+ADOQuery1.Parameters.ParamByName('indk').Value := strToFloat(hic);
+ADOQuery1.ExecSQL;
+end;
+
+procedure TForm13.closeMe(Sender: TObject; var Action: TCloseAction);
+begin
+ADOConnection1.Connected := False;
 end;
 
 procedure TForm13.FinTemps(Sender: TObject);
 begin
   Form13.Visible := true;
   Form14.Close;
+
+  if not DirectoryExists('C:\Users\Public\Documents\XTEMP') then
+begin
+  if not CreateDir('C:\Users\Public\Documents\XTEMP') then
+    ShowMessage('Erreur lors de la création du dossier');
+end;
+
+ADOConnection1.ConnectionString := 'Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\Public\Documents\XTEMP\TMPDB.accdb';
+ADOConnection1.Connected := True;
+
+// Créez une requête SQL pour créer une table de température dans la base de données
+ADOQuery1.SQL.Text := 'CREATE TABLE IF NOT EXISTS TMP (Date DATETIME, Temperature FLOAT, Humidite FLOAT, IndK FLOAT)';
+ADOQuery1.ExecSQL;
 end;
 
 procedure TForm13.Splash(Sender: TObject);
