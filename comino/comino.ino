@@ -15,7 +15,7 @@ Preferences preferences;
 
 const char* PARAM_INPUT_1 = "cmd";
 const char* PARAM_INPUT_2 = "rtmp";
-int relais1 = 27;
+const int relais1 = 23;
 String inputMessage = "null";
 float h = 0.00;
 float t = 0.00;
@@ -65,26 +65,17 @@ Serial.println( inputMessage );
 if(inputMessage == "a"){
   request->send(200,"text/plain","OK");
 }else if(inputMessage == "get"){
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-   h = dht.readHumidity();
-  // Read temperature as Celsius (the default)
-   t = dht.readTemperature();
-
-  // Check if any reads failed and exit early (to try again).
+ /*  
   if (isnan(h) || isnan(t)) {
     request->send(200,"text/plain","err");
+    Serial.print("temp : ");
+    Serial.println(t);
     return;
+  }else{
+    Serial.print("temp : ");
+    Serial.println(t);
   }
-
-  if ((t >= Y2+5) || (Y1-2 >= t)) {
-    request->send(200,"text/plain","error");
-    return;
-  }
-
-  // Compute heat index in Celsius (isFahreheit = false)
-   hic = dht.computeHeatIndex(t, h, false);
-  delay(3000);
+  */ 
   String jul = String(t)+":"+String(h)+"!"+String(hic);
   request->send(200,"text/plain",jul);
 }else{
@@ -116,14 +107,13 @@ server.begin();
 }
 
 void loop() {
-   h = dht.readHumidity();
+
+  h = dht.readHumidity();
    t = dht.readTemperature();
-  if (isnan(h) || isnan(t)) {
-    return;
-  }
    hic = dht.computeHeatIndex(t, h, false);
   delay(3000);
-  if (t > Y2){
+  
+ if (t > Y2){
     digitalWrite(relais1, LOW);
   }else if (Y1 > t){
     digitalWrite(relais1, HIGH);
